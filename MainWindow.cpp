@@ -12,6 +12,8 @@
 #include <iterator>
 #include <map>
 #include <cfenv>
+#include <ddraw.h>
+#include <d3d9.h>
 
 #include <detours.h>
 #pragma comment(lib, "detours.lib")
@@ -34,18 +36,47 @@ PlayVocal* fnPlayVocal = (PlayVocal*)0x004105b0;
 typedef void* (__fastcall StartMapPlaySound)(void*, DWORD edx);
 StartMapPlaySound* fnStartMapPlaySound = (StartMapPlaySound*)0x004784d0;
 
+// void Vid_FlipBuffers(D3DContext *param_1)
+typedef void* (Vid_FlipBuffers)(D3DContext* param_1);
+Vid_FlipBuffers* fnVid_FlipBuffers = 0;
+
 void __fastcall myPlayVocal(void* _this, DWORD edx, VOCAL v) {
 	//replace VOCAL to something else
 	OutputDebugStringA("myPlayVocal");
 	fnPlayVocal(_this, edx, VOCAL_DAMNATION__NO_DONATION__NO_SALVATION);
 }
 
+void DrawRect(LPDIRECTDRAWSURFACE7 surf, int X, int Y, int L, int H, D3DCOLOR color)
+{
+	RECT rect = { X, Y, X + L, Y + H };
+	HDC dc;
+	HRESULT hr = surf->GetDC(&dc);
+	if (hr != DD_OK) {
+		return;
+	}
+	::FillRect(dc, &rect, (HBRUSH)::GetStockObject(GRAY_BRUSH));
+	::TextOut(dc, X, Y, L"Hello", 5);
+	surf->ReleaseDC(dc);
+}
+
+void myVid_FlipBuffers(D3DContext* context) {
+	OutputDebugStringA("myVid_FlipBuffers\n");
+
+	DrawRect((LPDIRECTDRAWSURFACE7)context->surface2, 100, 200, 100, 100, D3DCOLOR_ARGB(255, 255, 0, 0));
+	fnVid_FlipBuffers(context);
+}
+
 void __fastcall myStartMapPlaySound(void* _this, DWORD edx) {
+	HMODULE dmaLib = LoadLibrary(L"dmavideo.dll");
+	fnVid_FlipBuffers = (Vid_FlipBuffers*)GetProcAddress(dmaLib, "Vid_FlipBuffers");
 	DetourRestoreAfterWith();
 
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
+
 	DetourAttach(&(PVOID&)fnPlayVocal, myPlayVocal);
+	DetourAttach(&(PVOID&)fnVid_FlipBuffers, myVid_FlipBuffers);
+
 	DetourTransactionCommit();
 
 	fnStartMapPlaySound(_this, edx);
