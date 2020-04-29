@@ -1642,8 +1642,17 @@ void MainWindow::NewFunction()
 		return;
 	}
 */
-	//fnPlayVocal(_this, 0, VOCAL_BACK_TO_FRONT_BONUS);
 	Game* pGame = (Game*)*(DWORD*)ptrToGame;
-	Ped *ped = fnSpawnPedAtPosition(pGame->CurrentPlayer->xyz.x, pGame->CurrentPlayer->xyz.y - 4096, pGame->CurrentPlayer->xyz.z + 16384, PED_REMAP_CARTHIEF, 1);
+	Ped *ped = fnSpawnPedAtPosition(pGame->CurrentPlayer->xyz.x, pGame->CurrentPlayer->xyz.y - 4096, pGame->CurrentPlayer->xyz.z + 16384, PED_REMAP_23, 0);
 	ped->occupation = CARTHIEF;
+	ped->field_0x22c = 2;
+	ped->aiMode = PED_AI_MODE_CARTHIEF_MUGGER;
+	ped->bitState2 = PED_BIT_STATE2_CARTHIEF;
+
+	ped->field_0x288 = 2;
+	ped->field_0x28c = 3;
+	ped->remap2 = PED_REMAP2_0;
+	ped->bitStateInvisOnFireEtc = (PED_BIT_STATE)(ped->bitStateInvisOnFireEtc | 8);
+	fnPlayVocal(_this, 0, VOCAL_Nice_work);
+//	ped->field_0x1f8 = _DAT_005e5f28;
 }

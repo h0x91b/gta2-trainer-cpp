@@ -233,6 +233,12 @@ typedef struct Sprite Sprite, *PSprite;
 
 typedef struct WEAPON_STRUCT WEAPON_STRUCT, *PWEAPON_STRUCT;
 
+typedef enum PED_AI_MODE {
+    PED_AI_MODE_0_DUMMY=0,
+    PED_AI_MODE_CARTHIEF_MUGGER=40,
+    PED_AI_MODE_PLAYER=9999
+} PED_AI_MODE;
+
 typedef enum PED_BIT_STATE {
     PED_BIT_STATE_2000000=33554432,
     PED_BIT_STATE_ARMED=128,
@@ -249,10 +255,10 @@ typedef enum PED_BIT_STATE {
 } PED_BIT_STATE;
 
 typedef enum PED_BIT_STATE2 {
+    PED_BIT_STATE2_CARTHIEF=6,
     PED_BIT_STATE2_FIRING_FROM_GUN=2,
-    PED_BIT_STATE2_UNK_4_POLICE=4,
     PED_BIT_STATE2_UNK_5=5,
-    PED_BIT_STATE2_UNK_6=6
+    PED_BIT_STATE2_UNK_MUGGER=4
 } PED_BIT_STATE2;
 
 typedef enum OCUPATION {
@@ -532,7 +538,7 @@ struct SomeStructInsideACar {
 struct Sprite {
     uint id;
     int field_0x4;
-    uint state1;
+    enum PED_STATE state1;
     int field_0xc;
     uint relToId;
     int field_0x14;
@@ -1138,7 +1144,7 @@ struct Ped {
     int field_0x13c;
     struct Car * refCar;
     int field_0x144;
-    int field_0x148;
+    struct Ped * pedRef;
     int field_0x14c;
     struct Car * armyCarRef;
     struct Car * field_0x154;
@@ -1194,7 +1200,7 @@ struct Ped {
     undefined2 eq_100;
     undefined2 field_0x214;
     short health;
-    short incrTo9999;
+    enum PED_AI_MODE aiMode;
     short field_0x21a;
     enum PED_BIT_STATE bitStateInvisOnFireEtc; /* invisibilty, electrofingers on fire and more  */
     undefined4 field_0x220;
@@ -1369,7 +1375,7 @@ struct CarManager5 {
 typedef struct CarsPrefab CarsPrefab, *PCarsPrefab;
 
 struct CarsPrefab { /* ptr is here 005e4ca0 */
-    void * * field_0x0;
+    struct Car * firstCar;
     struct Car * lastCar;
     struct Car arr306Cars[306];
     u2 carsCount;
