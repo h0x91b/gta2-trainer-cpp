@@ -24,9 +24,25 @@ BOOL DetourFunc(const DWORD originalFn, DWORD hookFn, size_t copyBytes = 5);
 const DWORD pGameTick = (DWORD)0x0045c1f0;
 const DWORD pDraw = (DWORD)0x00461960;
 const TrafficLigthStruct *ptrToTrafficLights = (TrafficLigthStruct*)0x006721cc;
-Game* game = 0;
 MainWindow* mainWnd = nullptr;
 
+DWORD ptrToPedManager = 0x005e5bbc;
+DWORD ptrToGame = 0x005eb4fc;
+
+typedef Ped* (__stdcall GetPedById)(int);
+GetPedById* fnGetPedByID = (GetPedById*)0x0043ae10;
+
+//Player* __thiscall Game::GetPlayerSlotByIndex(Game* this, byte index);
+typedef Player* (__fastcall GetPlayerSlotByIndex)(Game* game, DWORD edx, byte index);
+GetPlayerSlotByIndex* fnGetSaveSlotByIndex = (GetPlayerSlotByIndex*)0x004219e0;
+
+//void __thiscall ShowBigOnScreenLabel(void* this, WCHAR* txt, int timeToShowInSeconds);
+typedef void(__fastcall ShowBigOnScreenLabel)(void* ptr, DWORD edx, WCHAR* txt, int time);
+ShowBigOnScreenLabel* fnShowBigOnScreenLabel = (ShowBigOnScreenLabel*)0x004c6060;
+
+//void SpawnCar(int x, int y, int z, short rot, CAR_MODEL model)
+typedef Car* (SpawnCar)(int x, int y, int z, short rot, CAR_MODEL model);
+SpawnCar* fnSpawnCar = (SpawnCar*)0x00426e10;
 
 // void __fastcall PlayVocal(void *param_1,undefined4 unused,VOCAL vocal)
 typedef void* (__fastcall PlayVocal)(void*, DWORD edx, VOCAL vocal);
@@ -40,10 +56,23 @@ StartMapPlaySound* fnStartMapPlaySound = (StartMapPlaySound*)0x004784d0;
 typedef void* (Vid_FlipBuffers)(D3DContext* param_1);
 Vid_FlipBuffers* fnVid_FlipBuffers = 0;
 
+// Ped * SpawnPedAtPosition(int x,int y,int z,PED_REMAP remap,short param_5)
+typedef Ped* (SpawnPedAtPosition)(int x, int y, int z, PED_REMAP remap, short param_5);
+SpawnPedAtPosition* fnSpawnPedAtPosition = (SpawnPedAtPosition*)0x0043db40;
+
 void __fastcall myPlayVocal(void* _this, DWORD edx, VOCAL v) {
-	//replace VOCAL to something else
-	OutputDebugStringA("myPlayVocal");
-	fnPlayVocal(_this, edx, VOCAL_DAMNATION__NO_DONATION__NO_SALVATION);
+	fnPlayVocal(_this, edx, v);
+}
+
+void DrawText3(LPDIRECTDRAWSURFACE7 surf, int X, int Y, WCHAR* txt, COLORREF color) {
+	HDC dc;
+	HRESULT hr = surf->GetDC(&dc);
+	if (hr != DD_OK) {
+		return;
+	}
+	SetTextColor(dc, color);
+	::TextOut(dc, X, Y, txt, wcslen(txt));
+	surf->ReleaseDC(dc);
 }
 
 void DrawRect(LPDIRECTDRAWSURFACE7 surf, int X, int Y, int L, int H, D3DCOLOR color)
@@ -55,14 +84,42 @@ void DrawRect(LPDIRECTDRAWSURFACE7 surf, int X, int Y, int L, int H, D3DCOLOR co
 		return;
 	}
 	::FillRect(dc, &rect, (HBRUSH)::GetStockObject(GRAY_BRUSH));
-	::TextOut(dc, X, Y, L"Hello", 5);
 	surf->ReleaseDC(dc);
 }
 
 void myVid_FlipBuffers(D3DContext* context) {
 	OutputDebugStringA("myVid_FlipBuffers\n");
 
-	DrawRect((LPDIRECTDRAWSURFACE7)context->surface2, 100, 200, 100, 100, D3DCOLOR_ARGB(255, 255, 0, 0));
+	int width = *(int*)0x00673578;
+	int height = *(int*)0x006732e8;
+	int screenCenterX = width >> 1;
+	int screenCenterY = height >> 1;
+
+	//DrawRect((LPDIRECTDRAWSURFACE7)context->surface2, 100, 200, 100, 100, D3DCOLOR_ARGB(255, 255, 0, 0));
+	HDC dc;
+	LPDIRECTDRAWSURFACE7 surf = (LPDIRECTDRAWSURFACE7)context->surface2;
+	HRESULT hr = surf->GetDC(&dc);
+	Game* pGame = (Game*)*(DWORD*)ptrToGame;
+	if (hr == DD_OK && pGame && pGame->gameStatus ) {
+		RECT rect = { screenCenterX - 150, screenCenterY, screenCenterX+300, screenCenterY+300 };
+		SetBkMode(dc, TRANSPARENT);
+		SetTextColor(dc, RGB(50, 100, 250));
+		HFONT hFont = CreateFont(30, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, L"SYSTEM_FIXED_FONT");
+		HFONT hTmp = (HFONT)SelectObject(dc, hFont);
+		DrawText(
+			dc, 
+			L"Ped", 
+			3, 
+			&rect, 
+			DT_CENTER|DT_VCENTER
+		);
+		DeleteObject(SelectObject(dc, hTmp));
+
+		SetPixel(dc, width / 2, height / 2, RGB(255, 50, 50));
+
+		surf->ReleaseDC(dc);
+	}
+	mainWnd->OnGTADraw();
 	fnVid_FlipBuffers(context);
 }
 
@@ -127,10 +184,8 @@ static __declspec(naked) void gameTick(void) {
 		NOP
 	}
 
-	__asm MOV game, ECX; // copy ptr to game
-
 	OutputDebugStringA("gameTick\n");
-	mainWnd->OnGTAGameTick(game);
+	mainWnd->OnGTAGameTick(0);
 
 	__asm {
 		MOV EAX, pGameTick
@@ -617,24 +672,6 @@ void MainWindow::OnCommandsCaptureMouse()
 	}
 	menu->SetMenuItemInfoW(ID_COMMANDS_CAPTUREMOUSE, &menuItem);
 }
-
-DWORD ptrToPedManager = 0x005e5bbc;
-DWORD ptrToGame = 0x005eb4fc;
-
-typedef Ped* (__stdcall GetPedById)(int);
-GetPedById* fnGetPedByID = (GetPedById*)0x0043ae10;
-
-//Player* __thiscall Game::GetPlayerSlotByIndex(Game* this, byte index);
-typedef Player* (__fastcall GetPlayerSlotByIndex)(Game* game, DWORD edx, byte index);
-GetPlayerSlotByIndex* fnGetSaveSlotByIndex = (GetPlayerSlotByIndex*)0x004219e0;
-
-//void __thiscall ShowBigOnScreenLabel(void* this, WCHAR* txt, int timeToShowInSeconds);
-typedef void(__fastcall ShowBigOnScreenLabel)(void* ptr, DWORD edx, WCHAR* txt, int time);
-ShowBigOnScreenLabel* fnShowBigOnScreenLabel = (ShowBigOnScreenLabel*)0x004c6060;
-
-//void SpawnCar(int x, int y, int z, short rot, CAR_MODEL model)
-typedef Car* (SpawnCar)(int x, int y, int z, short rot, CAR_MODEL model);
-SpawnCar* fnSpawnCar = (SpawnCar*)0x00426e10;
 
 void MainWindow::CaptureMouse()
 {
@@ -1605,5 +1642,8 @@ void MainWindow::NewFunction()
 		return;
 	}
 */
-	fnPlayVocal(_this, 0, VOCAL_BACK_TO_FRONT_BONUS);
+	//fnPlayVocal(_this, 0, VOCAL_BACK_TO_FRONT_BONUS);
+	Game* pGame = (Game*)*(DWORD*)ptrToGame;
+	Ped *ped = fnSpawnPedAtPosition(pGame->CurrentPlayer->xyz.x, pGame->CurrentPlayer->xyz.y - 4096, pGame->CurrentPlayer->xyz.z + 16384, PED_REMAP_CARTHIEF, 1);
+	ped->occupation = CARTHIEF;
 }

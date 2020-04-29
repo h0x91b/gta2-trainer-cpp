@@ -234,10 +234,12 @@ typedef struct Sprite Sprite, *PSprite;
 typedef struct WEAPON_STRUCT WEAPON_STRUCT, *PWEAPON_STRUCT;
 
 typedef enum PED_BIT_STATE {
+    PED_BIT_STATE_2000000=33554432,
     PED_BIT_STATE_ARMED=128,
     PED_BIT_STATE_FIRING_FROM_GUN=2048,
     PED_BIT_STATE_FOLLOW_CAR_TO_GET_IN=65536,
     PED_BIT_STATE_GETING_IN_OR_OUT_CAR=134217728,
+    PED_BIT_STATE_HAS_GUN_BUT_NOT_PISTOL=268435456,
     PED_BIT_STATE_TOGGLED_ON_WHEN_FIRST_TIME_ATTACK_A_PED=4,
     PED_BIT_STATE_UNARMED=512,
     PED_BIT_STATE_UNK_1_ALWAYS1=1,
@@ -245,6 +247,13 @@ typedef enum PED_BIT_STATE {
     PED_BIT_STATE_UNK_400=1024,
     PED_BIT_STATE_ZERO_ON_START_GAME_BUT_TOGGLED_ON_FIRST_CAR_ENTER=32768
 } PED_BIT_STATE;
+
+typedef enum PED_BIT_STATE2 {
+    PED_BIT_STATE2_FIRING_FROM_GUN=2,
+    PED_BIT_STATE2_UNK_4_POLICE=4,
+    PED_BIT_STATE2_UNK_5=5,
+    PED_BIT_STATE2_UNK_6=6
+} PED_BIT_STATE2;
 
 typedef enum OCUPATION {
     ANY_ELVIS=49,
@@ -283,14 +292,54 @@ typedef enum OCUPATION {
     UNKNOWN_OCUPATION13=19,
     UNKNOWN_OCUPATION17=23,
     UNKNOWN_OCUPATION2=2,
-    UNKNOWN_OCUPATION4=4,
     UNKNOWN_OCUPATION8=8,
     UNKNOWN_OCUPATION9=9,
+    UNKNOWN_OCUPATION_DRIVER4=4,
     UNK_REL_TO_POLICE1=29,
     UNK_REL_TO_POLICE2=30,
     UNK_REL_TO_POLICE3=31,
     UNK_REL_TO_POLICE4=37
 } OCUPATION;
+
+typedef enum PED_REMAP {
+    PED_REMAP_1=1,
+    PED_REMAP_10=10,
+    PED_REMAP_11=11,
+    PED_REMAP_12=12,
+    PED_REMAP_13=13,
+    PED_REMAP_14=14,
+    PED_REMAP_16=16,
+    PED_REMAP_2=2,
+    PED_REMAP_22=22,
+    PED_REMAP_23=23,
+    PED_REMAP_24=24,
+    PED_REMAP_26=26,
+    PED_REMAP_27=27,
+    PED_REMAP_28=28,
+    PED_REMAP_29=29,
+    PED_REMAP_3=3,
+    PED_REMAP_30=30,
+    PED_REMAP_31=31,
+    PED_REMAP_32=32,
+    PED_REMAP_33=33,
+    PED_REMAP_34=34,
+    PED_REMAP_35=35,
+    PED_REMAP_36=36,
+    PED_REMAP_37=37,
+    PED_REMAP_4=4,
+    PED_REMAP_5=5,
+    PED_REMAP_6=6,
+    PED_REMAP_7=7,
+    PED_REMAP_8=8,
+    PED_REMAP_9=9,
+    PED_REMAP_CARTHIEF=15,
+    PED_REMAP_DRIVER_18=18,
+    PED_REMAP_DRIVER_19=19,
+    PED_REMAP_DRIVER_20=20,
+    PED_REMAP_DRIVER_21=21,
+    PED_REMAP_MUGGER=17,
+    PED_REMAP_PLAYER=25
+} PED_REMAP;
 
 typedef enum PED_STATE3 {
     PED_STATE3_COP=54,
@@ -332,6 +381,12 @@ typedef enum PED_STATE3 {
     PED_STATE3_UNKc=12,
     PED_STATE3_UNKe=14
 } PED_STATE3;
+
+typedef enum PED_REMAP2 {
+    PED_REMAP2_0=0,
+    PED_REMAP2_1=1,
+    PED_REMAP2_2=2
+} PED_REMAP2;
 
 typedef enum PED_STATE {
     PED_STATE_DRIVING_A_CAR=10,
@@ -779,8 +834,14 @@ struct Ped {
     byte field_0x1;
     undefined field_0x2;
     undefined field_0x3;
-    struct Ped * unknownPedsArr;
-    struct Ped * field_0x8;
+    undefined field_0x4;
+    undefined field_0x5;
+    undefined field_0x6;
+    undefined field_0x7;
+    undefined field_0x8;
+    undefined field_0x9;
+    undefined field_0xa;
+    undefined field_0xb;
     undefined field_0xc;
     undefined field_0xd;
     undefined field_0xe;
@@ -830,8 +891,7 @@ struct Ped {
     undefined field_0x3d;
     undefined field_0x3e;
     undefined field_0x3f;
-    undefined field_0x40;
-    undefined field_0x41;
+    undefined2 field_0x40;
     undefined field_0x42;
     undefined field_0x43;
     undefined field_0x44;
@@ -1080,7 +1140,7 @@ struct Ped {
     int field_0x144;
     int field_0x148;
     int field_0x14c;
-    int field_0x150;
+    struct Car * armyCarRef;
     struct Car * field_0x154;
     int field_0x158;
     struct WEAPON_PLAYER_LIST * playerWeapons;
@@ -1094,21 +1154,12 @@ struct Ped {
     int field_0x17c;
     int field_0x180;
     int field_0x184;
-    undefined field_0x188;
-    undefined field_0x189;
-    undefined field_0x18a;
-    undefined field_0x18b;
+    undefined4 field_0x188;
     int field_0x18c;
     int field_0x190;
     int field_0x194;
-    undefined field_0x198;
-    undefined field_0x199;
-    undefined field_0x19a;
-    undefined field_0x19b;
-    undefined field_0x19c;
-    undefined field_0x19d;
-    undefined field_0x19e;
-    undefined field_0x19f;
+    undefined4 field_0x198;
+    undefined4 field_0x19c;
     int field_0x1a0;
     int field_0x1a4;
     struct Ped * elvisLeader;
@@ -1121,30 +1172,18 @@ struct Ped {
     struct Ped * field_0x1c4;
     struct Ped * field_0x1c8;
     struct Ped * field_0x1cc;
-    void * field_0x1d0;
-    void * field_0x1d4;
-    void * field_0x1d8;
+    int field_0x1d0;
+    int field_0x1d4;
+    int field_0x1d8;
     int field_0x1dc;
     int field_0x1e0;
     int field_0x1e4;
-    undefined field_0x1e8;
-    undefined field_0x1e9;
-    undefined field_0x1ea;
-    undefined field_0x1eb;
-    undefined field_0x1ec;
-    undefined field_0x1ed;
-    undefined field_0x1ee;
-    undefined field_0x1ef;
+    int field_0x1e8;
+    int field_0x1ec;
     int field_0x1f0;
     int field_0x1f4;
-    undefined field_0x1f8;
-    undefined field_0x1f9;
-    undefined field_0x1fa;
-    undefined field_0x1fb;
-    undefined field_0x1fc;
-    undefined field_0x1fd;
-    undefined field_0x1fe;
-    undefined field_0x1ff;
+    undefined4 field_0x1f8;
+    int field_0x1fc;
     int id;
     int somePedId;
     ushort Invulnerability; /* 9999 = infinity */
@@ -1152,18 +1191,13 @@ struct Ped {
     short field_0x20c;
     short field_0x20e;
     short field_0x210;
-    undefined field_0x212;
-    undefined field_0x213;
-    undefined field_0x214;
-    undefined field_0x215;
+    undefined2 eq_100;
+    undefined2 field_0x214;
     short health;
     short incrTo9999;
     short field_0x21a;
     enum PED_BIT_STATE bitStateInvisOnFireEtc; /* invisibilty, electrofingers on fire and more  */
-    undefined field_0x220;
-    undefined field_0x221;
-    undefined field_0x222;
-    undefined field_0x223;
+    undefined4 field_0x220;
     byte field_0x224;
     byte field_0x225;
     byte field_0x226;
@@ -1178,13 +1212,13 @@ struct Ped {
     undefined field_0x235;
     undefined field_0x236;
     undefined field_0x237;
-    uint bitState2;
+    enum PED_BIT_STATE2 bitState2;
     byte field_0x23c;
     undefined field_0x23d;
     undefined field_0x23e;
     undefined field_0x23f;
     enum OCUPATION occupation;
-    byte field_0x244;
+    enum PED_REMAP remap;
     undefined field_0x245;
     undefined field_0x246;
     undefined field_0x247;
@@ -1206,13 +1240,13 @@ struct Ped {
     byte field_0x263;
     byte field_0x264;
     byte field_0x265;
-    undefined field_0x266;
+    undefined1 field_0x266;
     byte field_0x267;
-    undefined field_0x268;
-    undefined field_0x269;
+    undefined1 field_0x268;
+    u1 field_0x269;
     byte field_0x26a;
     undefined field_0x26b;
-    int field_0x26c;
+    enum PED_REMAP2 remap2;
     int field_0x270;
     enum CAR_MODEL gangCarModel;
     enum PED_STATE state;
@@ -3072,7 +3106,7 @@ struct Player { /* Player actually */
 struct Game { /* S8 */
     enum GAME_STATUS gameStatus; /* 1 - run, 2 - pause game */
     struct Player * players[6];
-    struct Player * currentSaveSlot2;
+    struct Player * CurrentPlayer2;
     byte field_0x20;
     byte field_0x21;
     byte field_0x22;
@@ -3088,7 +3122,7 @@ struct Game { /* S8 */
     undefined field_0x32;
     undefined field_0x33;
     int field_0x34;
-    struct Player * CurrentSaveSlot; /* Created by retype action */
+    struct Player * CurrentPlayer; /* Created by retype action */
     undefined field_0x3c;
     undefined field_0x3d;
     undefined field_0x3e;
@@ -3932,13 +3966,6 @@ struct sprite_entry {
     ushort pad;
 };
 
-typedef enum PED_BIT_STATE2 {
-    PED_BIT_STATE2_FIRING_FROM_GUN=2,
-    PED_BIT_STATE2_UNK_4_POLICE=4,
-    PED_BIT_STATE2_UNK_5=5,
-    PED_BIT_STATE2_UNK_6=6
-} PED_BIT_STATE2;
-
 typedef enum PED_STATE4 {
     PED_STATE4_IDLE_STAYING=2,
     PED_STATE4_PROBABLY_JUMPING=3,
@@ -4378,10 +4405,7 @@ struct StyleFileHeader {
 typedef struct WeaponRelStruct WeaponRelStruct, *PWeaponRelStruct;
 
 struct WeaponRelStruct {
-    undefined field_0x0;
-    undefined field_0x1;
-    undefined field_0x2;
-    undefined field_0x3;
+    struct WEAPON_STRUCT * ptr;
     struct WEAPON_STRUCT weapons[28];
     undefined field_0x544[2747];
     undefined1 field_0xfff;
@@ -5319,7 +5343,7 @@ struct GlobalSettings { /* 005ead50 */
     bool skip_lid;
     bool do_police_2;
     bool keep_weapons_after_death;
-    undefined field_0x4f;
+    bool spawn_only_elvis;
     undefined field_0x50;
     bool do_show_ids;
     bool jail_key;
